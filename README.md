@@ -3,30 +3,10 @@
 A production-ready Telegram bot plugin for opencode with streaming responses, persistent sessions, and smart timeout recovery.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Platform](https://img.shields.io/badge/platform-Linux%20|%20macOS-blue)](https://github.com/nebojsa-simic/opencode-telegram-bot)
 
-## Installation
+## Quick Start
 
-### Via npm (Recommended)
-
-Add to your opencode.json:
-
-```json
-{
-  "plugin": ["opencode-telegram-bot"]
-}
-```
-
-Then create ~/.config/opencode-bot/.env with:
-```
-TELEGRAM_BOT_TOKEN=your_token_here
-TELEGRAM_ALLOWLIST=your_chat_id_here
-CI=true
-```
-
-### Via GitHub
-
-Add to your opencode.json:
+1. Add to your `opencode.json` (in ~/.config/opencode/ or project root):
 
 ```json
 {
@@ -34,37 +14,38 @@ Add to your opencode.json:
 }
 ```
 
-### Manual Installation Prompt
+2. Create `~/.config/opencode-bot/.env` with:
 
-Copy and paste this entire prompt into opencode to set up manually:
+```
+TELEGRAM_BOT_TOKEN=123456789:ABCdefGHIjklMNOpqrsTUVwxyz
+TELEGRAM_ALLOWLIST=724085721
+CI=true
+```
+
+3. Restart opencode
+
+**Get your bot token:** Message @BotFather on Telegram, send /newbot
+
+**Get your chat ID:** Message your bot, then visit: https://api.telegram.org/bot<TOKEN>/getUpdates
+
+That's it! Your bot is running 24/7.
+
+## Manual Installation
+
+If you prefer manual setup, copy and paste this prompt into opencode:
 
 ```markdown
-I want to install the Telegram bot plugin for opencode. Guide me through these steps:
+I want to install the Telegram bot plugin manually. Guide me through these steps:
 
-STEP 1: Check if opencode is installed at ~/.opencode/bin/opencode
+1. Check if opencode is installed
+2. Ask for my Telegram bot token and chat ID
+3. Create ~/.config/opencode-bot/.env with my credentials
+4. Download the plugin from GitHub
+5. Create opencode.json with plugin configuration
+6. Set up 24/7 service (systemd on Linux, launchd on macOS)
+7. Start the service and test it
 
-STEP 2: Ask me for my Telegram bot token from @BotFather and my chat ID
-
-STEP 3: Create directory ~/.config/opencode-bot/plugins
-
-STEP 4: Create .env file at ~/.config/opencode-bot/.env with:
-    TELEGRAM_BOT_TOKEN=<my_token>
-    TELEGRAM_ALLOWLIST=<my_chat_id>
-    CI=true
-
-STEP 5: Download plugin files from GitHub to ~/.config/opencode-bot/plugins/
-
-STEP 6: Create opencode.json at ~/.config/opencode-bot/ with plugin configuration
-
-STEP 7: Enable 24/7 operation (loginctl enable-linger on Linux, skip on macOS)
-
-STEP 8: Create systemd service (Linux) or launchd plist (macOS)
-
-STEP 9: Start the service and verify it is running
-
-STEP 10: Test by sending a message to the bot on Telegram
-
-Guide me through each step one at a time, waiting for my confirmation before proceeding.
+Guide me one step at a time, waiting for confirmation before proceeding.
 ```
 
 ## Features
@@ -78,7 +59,9 @@ Guide me through each step one at a time, waiting for my confirmation before pro
 
 ## Configuration
 
-Create .env file with:
+### Environment Variables
+
+Create `~/.config/opencode-bot/.env`:
 
 | Variable | Required | Description |
 |----------|----------|-------------|
@@ -86,11 +69,19 @@ Create .env file with:
 | TELEGRAM_ALLOWLIST | Yes | Allowed chat IDs (comma-separated) |
 | CI | Recommended | Set to true for non-interactive mode |
 
-## Commands
+### Bot Commands
 
 - /clear - Reset session and start fresh
 - /session - Show current session ID
 - /queue - Show pending messages
+
+## Troubleshooting
+
+**Bot not responding?** Check logs:
+- Linux: `sudo journalctl -u opencode -f`
+- macOS: `tail -f ~/.config/opencode-bot/opencode.log`
+
+**Missing credentials error?** Make sure .env file exists at `~/.config/opencode-bot/.env`
 
 ## License
 
