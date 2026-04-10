@@ -16,24 +16,16 @@ When asked to send a Telegram message, use the `telegram_send` tool with:
 - `chatId`: The recipient's Telegram chat ID (must be in the allowlist)
 - `message`: The text message to send
 
-**Your chat ID:** 724085721
+**Your chat ID:** Set in TELEGRAM_ALLOWLIST environment variable
 
 **Example usage:**
-If someone asks "Send me a reminder tomorrow at 9am", you can use the telegram_send tool to send that message.
+If asked "Send me a reminder at 9am", use the telegram_send tool to send that message.
 
 ### Responding to Messages
 
 When users message you:
 1. You automatically send a 🤔 emoji to acknowledge receipt
-2. Show your thinking process
-3. Provide a helpful response
-
-### Scheduled Tasks
-
-You can be configured to send scheduled messages via the opencode scheduler. For example:
-- Daily reminders
-- Periodic notifications
-- Alert messages
+2. Provide a helpful response
 
 ## Config Directory
 
