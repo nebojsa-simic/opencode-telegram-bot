@@ -5,20 +5,31 @@ import * as fs from "fs"
 import * as path from "path"
 
 function loadEnvFile() {
-  const envPath = path.join(path.dirname(__dirname), ".env")
-  try {
-    if (fs.existsSync(envPath)) {
-      const content = fs.readFileSync(envPath, "utf-8")
-      content.split("\n").forEach(line => {
-        const [key, ...valueParts] = line.split("=")
-        if (key && valueParts.length > 0) {
-          process.env[key.trim()] = valueParts.join("=").trim()
-        }
-      })
+  // Try multiple locations for .env file
+  const possiblePaths = [
+    path.join(path.dirname(__dirname), ".env"),
+    path.join(process.env.HOME || "", ".config", "opencode-bot", ".env"),
+    path.join(process.env.HOME || "", ".config", "opencode", ".env"),
+  ]
+  
+  for (const envPath of possiblePaths) {
+    try {
+      if (fs.existsSync(envPath)) {
+        console.log(`Telegram plugin: Loading .env from ${envPath}`)
+        const content = fs.readFileSync(envPath, "utf-8")
+        content.split("\n").forEach(line => {
+          const [key, ...valueParts] = line.split("=")
+          if (key && valueParts.length > 0) {
+            process.env[key.trim()] = valueParts.join("=").trim()
+          }
+        })
+        return
+      }
+    } catch (error) {
+      console.error(`Failed to load .env from ${envPath}:`, error)
     }
-  } catch (error) {
-    console.error("Failed to load .env file:", error)
   }
+  console.log("Telegram plugin: No .env file found in expected locations")
 }
 
 loadEnvFile()
@@ -138,14 +149,36 @@ const chatSessions = loadSessions()
 let isProcessing = false
 
 export const TelegramPlugin: Plugin = async ({ client }) => {
+  // Reload env to get latest credentials
+  loadEnvFile()
+  
   const CONFIG = {
     TOKEN: process.env.TELEGRAM_BOT_TOKEN,
     ALLOWLIST: process.env.TELEGRAM_ALLOWLIST?.split(",") || []
   }
 
   if (!CONFIG.TOKEN) {
-    console.warn("Telegram plugin: TELEGRAM_BOT_TOKEN not set")
-    return {}
+    console.error("Telegram plugin: TELEGRAM_BOT_TOKEN not set!")
+    console.error("Telegram plugin: Please create ~/.config/opencode-bot/.env with:")
+    console.error("  TELEGRAM_BOT_TOKEN=your_bot_token_here")
+    console.error("  TELEGRAM_ALLOWLIST=your_chat_id_here")
+    console.error("Telegram plugin: Plugin will not function until credentials are set.")
+    
+    // Return a plugin that shows error on any Telegram command
+    return {
+      tool: {
+        telegram_send: tool({
+          description: "Send a Telegram message (not configured)",
+          args: {
+            chatId: z.string(),
+            message: z.string()
+          },
+          execute: async () => {
+            return "Telegram bot not configured. Please set TELEGRAM_BOT_TOKEN in ~/.config/opencode-bot/.env"
+          }
+        })
+      }
+    }
   }
 
   const BOT_API = `https://api.telegram.org/bot${CONFIG.TOKEN}`
