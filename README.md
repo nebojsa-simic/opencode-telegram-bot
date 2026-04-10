@@ -30,13 +30,12 @@ CI=true
 
 **Option A: Run setup script (Recommended)**
 ```bash
-# Clone and run
 git clone https://github.com/nebojsa-simic/opencode-telegram-bot.git
 cd opencode-telegram-bot
 ./setup-service.sh
 ```
 
-**Option B: Manual setup**
+**Option B: Manual**
 
 For Linux:
 ```bash
@@ -44,8 +43,6 @@ loginctl enable-linger $(whoami)
 ```
 
 For macOS: Skip this step (launchd handles it automatically).
-
-Then start opencode manually, or create a systemd/launchd service yourself.
 
 ### 4. Get Credentials
 
@@ -59,7 +56,7 @@ Then start opencode manually, or create a systemd/launchd service yourself.
 
 ## Manual Installation
 
-If you prefer guided setup, copy and paste this prompt into opencode:
+Copy and paste this into opencode for guided setup:
 
 ```markdown
 I want to install the Telegram bot plugin manually. Guide me through:
