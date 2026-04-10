@@ -1,0 +1,36 @@
+[Unit]
+Description=Opencode Telegram Bot
+After=network.target network-online.target
+
+[Service]
+Type=simple
+User=YOUR_USERNAME
+Group=YOUR_USERNAME
+WorkingDirectory=/home/YOUR_USERNAME
+ExecStart=/home/YOUR_USERNAME/.opencode/bin/opencode
+Restart=always
+RestartSec=10
+
+TimeoutStartSec=120
+TimeoutStopSec=60
+
+MemoryMax=2G
+MemoryHigh=1536M
+
+Environment=PATH=/home/YOUR_USERNAME/.opencode/bin:/home/YOUR_USERNAME/.local/bin:/home/YOUR_USERNAME/bin:/usr/local/bin:/usr/bin:/bin
+Environment=HOME=/home/YOUR_USERNAME
+Environment=OPENCODE_CONFIG_DIR=/home/YOUR_USERNAME/.config/opencode-bot
+Environment=NODE_NO_WARNINGS=1
+Environment=CI=true
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=opencode-bot
+
+KillMode=mixed
+KillSignal=SIGTERM
+SendSIGKILL=yes
+FinalKillSignal=SIGKILL
+
+[Install]
+WantedBy=multi-user.target

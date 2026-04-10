@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.opencode.bot</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/YOUR_USERNAME/.opencode/bin/opencode</string>
+    </array>
+    <key>WorkingDirectory</key>
+    <string>/Users/YOUR_USERNAME</string>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>OPENCODE_CONFIG_DIR</key>
+        <string>/Users/YOUR_USERNAME/.config/opencode-bot</string>
+        <key>CI</key>
+        <string>true</string>
+        <key>PATH</key>
+        <string>/usr/local/bin:/usr/bin:/bin</string>
+        <key>HOME</key>
+        <string>/Users/YOUR_USERNAME</string>
+    </dict>
+    <key>StandardOutPath</key>
+    <string>/Users/YOUR_USERNAME/.config/opencode-bot/opencode.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/YOUR_USERNAME/.config/opencode-bot/opencode.err</string>
+    <key>SoftResourceLimits</key>
+    <dict>
+        <key>Memory</key>
+        <integer>2147483648</integer>
+    </dict>
+</dict>
+</plist>

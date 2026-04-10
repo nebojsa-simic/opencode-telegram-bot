@@ -1,0 +1,179 @@
+I want to install a production-ready Telegram bot for opencode. Please help me set it up by following these steps IN ORDER. Wait for my confirmation after each step before proceeding.
+
+## STEP 1: Check Prerequisites
+First, verify opencode is installed by checking if ~/.opencode/bin/opencode exists. If not, tell me to install it from https://opencode.ai
+
+## STEP 2: Get Telegram Credentials
+Ask me for:
+1. My Telegram bot token (if I don't have one, guide me to message @BotFather on Telegram and send /newbot)
+2. My Telegram chat ID (tell me to message my bot, then visit https://api.telegram.org/bot<TOKEN>/getUpdates to find it)
+
+Wait for me to provide both values before continuing.
+
+## STEP 3: Create Directory Structure
+Run these commands:
+```bash
+mkdir -p ~/.config/opencode-bot/plugins
+```
+
+Show me the created directories and ask me to confirm before proceeding.
+
+## STEP 4: Create .env File
+Create the file ~/.config/opencode-bot/.env with this content (replace with my actual values):
+```
+TELEGRAM_BOT_TOKEN=<my_token>
+TELEGRAM_ALLOWLIST=<my_chat_id>
+CI=true
+```
+
+Show me the file content and ask me to confirm.
+
+## STEP 5: Download Plugin Files
+Download these files from https://github.com/nsimic/opencode-telegram-bot/tree/main/plugins:
+- telegram.ts → ~/.config/opencode-bot/plugins/telegram.ts
+- memory-sqlite.ts → ~/.config/opencode-bot/plugins/memory-sqlite.ts
+- mcp-deferred.ts → ~/.config/opencode-bot/plugins/mcp-deferred.ts
+
+If you can't download directly, ask me to clone the repo or download manually.
+
+Show me the downloaded files and ask me to confirm.
+
+## STEP 6: Create AGENTS.md
+Create ~/.config/opencode-bot/AGENTS.md with this content:
+```markdown
+You are a Telegram bot assistant.
+
+## Response Format
+Always structure responses like this:
+**THINKING:**
+[Brief reasoning]
+**ANSWER:**
+[Your response]
+
+## Guidelines
+- Keep responses concise (under 200 words)
+- Be friendly and conversational
+- No code blocks unless requested
+- Show thinking first, then answer
+
+## Telegram Capabilities
+You have access to telegram_send tool for proactive messaging.
+Your chat ID is: <my_chat_id>
+```
+
+Show me the file and ask me to confirm.
+
+## STEP 7: Create opencode.json
+Create ~/.config/opencode-bot/opencode.json with:
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": [
+    "./plugins/telegram.ts",
+    "./plugins/memory-sqlite.ts",
+    "./plugins/mcp-deferred.ts"
+  ],
+  "instructions": ["AGENTS.md"]
+}
+```
+
+Show me and ask me to confirm.
+
+## STEP 8: Enable User Linger
+Run: `loginctl enable-linger $(whoami)`
+Explain that this allows the bot to run 24/7 even when I log out.
+
+Show the output and ask me to confirm.
+
+## STEP 9: Create Systemd Service
+Create /etc/systemd/system/opencode.service with this content (replace YOUR_USERNAME with my actual username):
+```ini
+[Unit]
+Description=Opencode Telegram Bot
+After=network.target network-online.target
+
+[Service]
+Type=simple
+User=YOUR_USERNAME
+Group=YOUR_USERNAME
+WorkingDirectory=/home/YOUR_USERNAME
+ExecStart=/home/YOUR_USERNAME/.opencode/bin/opencode
+Restart=always
+RestartSec=10
+TimeoutStartSec=120
+TimeoutStopSec=60
+MemoryMax=2G
+MemoryHigh=1536M
+Environment=PATH=/home/YOUR_USERNAME/.opencode/bin:/usr/local/bin:/usr/bin:/bin
+Environment=HOME=/home/YOUR_USERNAME
+Environment=OPENCODE_CONFIG_DIR=/home/YOUR_USERNAME/.config/opencode-bot
+Environment=NODE_NO_WARNINGS=1
+Environment=CI=true
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=opencode-bot
+KillMode=mixed
+KillSignal=SIGTERM
+SendSIGKILL=yes
+FinalKillSignal=SIGKILL
+
+[Install]
+WantedBy=multi-user.target
+```
+
+To create this file, you'll need sudo. Ask me to run:
+```bash
+sudo tee /etc/systemd/system/opencode.service > /dev/null << 'EOF'
+<file content here>
+EOF
+```
+
+Show me when it's created and ask me to confirm.
+
+## STEP 10: Start the Bot Service
+Guide me to run these commands:
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable opencode
+sudo systemctl start opencode
+sudo systemctl status opencode --no-pager
+```
+
+Show me the status output. It should say "Active: active (running)".
+
+## STEP 11: Test the Bot
+Tell me to send a test message to my bot on Telegram (just say "hi" or "test").
+
+Then check the logs with me:
+```bash
+sudo journalctl -u opencode --since "2 minutes ago" -n 20
+```
+
+Look for:
+- "Telegram: Queued message from <chat_id>"
+- "Telegram: Processing message from <chat_id>"
+- "Telegram: Completed message from <chat_id>"
+
+If you see these, the bot is working!
+
+## STEP 12: Verify Features
+Tell me to test these commands by messaging the bot:
+1. Send any message → Should get streaming response with 🤔 emoji first
+2. Send `/session` → Should show session ID
+3. Send `/queue` → Should show queue status
+4. Send `/clear` → Should clear the session
+
+Ask me if everything works. If yes, installation is complete!
+
+## Features to Mention at the End:
+✅ Streaming responses (300-byte chunks)
+✅ Persistent sessions (survive restarts)
+✅ 60s timeout with smart recovery
+✅ Message queue (max 8 messages)
+✅ Auto-restart on crash
+✅ 24/7 operation with systemd
+✅ Non-interactive mode (CI=true)
+
+---
+
+Start by asking me if I have opencode installed, then proceed through the steps one at a time.
