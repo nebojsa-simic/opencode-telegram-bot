@@ -186,7 +186,7 @@ export const TelegramPlugin: Plugin = async ({ client }) => {
     console.error("Telegram plugin: TELEGRAM_ALLOWLIST is required!")
     console.error("Telegram plugin: This bot supports ONE user only.")
     console.error("Telegram plugin: Add your chat ID to ~/.config/opencode-bot/.env:")
-    console.error("  TELEGRAM_ALLOWLIST=724085721")
+    console.error("  TELEGRAM_ALLOWLIST=your_chat_id_here")
     console.error("Telegram plugin: Plugin will not function until configured.")
     
     return {
