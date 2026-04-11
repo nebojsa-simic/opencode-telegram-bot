@@ -224,9 +224,10 @@ export const TelegramPlugin: Plugin = async ({ client }) => {
 
   async function processMessage(msg: QueuedMessage) {
     const { chatId, text, replyTo } = msg
+    let sessionId: string | null = null
     
     try {
-      const sessionId = await getOrCreateSession(chatId)
+      sessionId = await getOrCreateSession(chatId)
       streamingSessions[sessionId] = { chatId, buffer: new DeltaTextBuffer(300) }
       
       console.log(`Telegram: Processing message from ${chatId} (session: ${sessionId.substring(0, 15)})`)
@@ -273,7 +274,8 @@ export const TelegramPlugin: Plugin = async ({ client }) => {
         
         // Retry with simpler context
         try {
-          const sessionId = await getOrCreateSession(chatId)
+          sessionId = await getOrCreateSession(chatId)
+          streamingSessions[sessionId] = { chatId, buffer: new DeltaTextBuffer(300) }
           const simplifiedPrompt = `Provide a concise answer (under 100 words) to: ${text.substring(0, 200)}`
           
           await client.session.prompt({
@@ -297,9 +299,13 @@ export const TelegramPlugin: Plugin = async ({ client }) => {
         // Other errors
         await sendMessage(chatId, `❌ Error: ${error.message}`, replyTo)
       }
+    } finally {
+      // Ensure streaming session is cleaned up on all paths
+      if (sessionId && streamingSessions[sessionId]) {
+        delete streamingSessions[sessionId]
+      }
+      isProcessing = false
     }
-    
-    isProcessing = false
   }
 
   async function processQueue() {
