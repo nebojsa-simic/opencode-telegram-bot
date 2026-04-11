@@ -2,6 +2,22 @@
 
 This guide is for developers working on the telegram-bot-plugin codebase.
 
+## Architecture Decision: Single-User Design
+
+**This bot supports exactly ONE user.** This is a deliberate design choice that:
+- Eliminates race conditions in session management
+- Simplifies concurrency control
+- Reduces memory footprint
+- Matches typical usage pattern (personal AI assistant)
+
+**Enforcement:**
+- `TELEGRAM_ALLOWLIST` must contain exactly one chat ID
+- Startup validation rejects empty or multi-value allowlists
+- Runtime checks reject messages from unauthorized chats
+- `telegram_send` tool validates chat ID matches configured user
+
+If multi-user support is needed, this codebase requires significant refactoring (session locking, per-user queues, etc.).
+
 ## Quick Start
 
 ### Local Testing
@@ -124,6 +140,7 @@ Before committing changes:
 - [ ] Commands work: /clear, /session, /queue
 - [ ] Service restarts cleanly
 - [ ] No memory leaks (check queue size stays ≤8)
+- [ ] **Single-user enforcement works** (verify ALLOWLIST validation)
 
 ## Deployment
 
@@ -159,7 +176,9 @@ sudo systemctl restart opencode-bot
 
 ## Recent Changes
 
+- **Single-user enforcement** - Added startup validation and runtime checks
 - Removed memory/SQLite features (moved to separate repo)
 - Added `setup-service.sh` for easy 24/7 deployment
 - Improved timeout recovery with error analysis
+- Fixed streamingSessions memory leak on error paths
 - Made AGENTS.md a template (chat ID from env var, not hardcoded)

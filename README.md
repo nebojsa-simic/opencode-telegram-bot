@@ -1,6 +1,6 @@
 # opencode-telegram-bot
 
-A production-ready Telegram bot plugin for opencode with streaming responses, persistent sessions, and smart timeout recovery.
+A production-ready **single-user** Telegram bot plugin for opencode with streaming responses, persistent sessions, and smart timeout recovery.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -87,8 +87,10 @@ Create `~/.config/opencode-bot/.env`:
 | Variable | Required | Description |
 |----------|----------|-------------|
 | TELEGRAM_BOT_TOKEN | Yes | Bot token from @BotFather |
-| TELEGRAM_ALLOWLIST | Yes | Allowed chat IDs (comma-separated) |
+| TELEGRAM_ALLOWLIST | Yes | **Single chat ID only** (e.g., `724085721`). This bot is designed for one user. |
 | CI | Recommended | Set to true for non-interactive mode |
+
+> **⚠️ Single-User Design:** This bot supports **exactly one user**. Multiple chat IDs in `TELEGRAM_ALLOWLIST` will cause warnings and unpredictable behavior.
 
 ### Bot Commands
 
