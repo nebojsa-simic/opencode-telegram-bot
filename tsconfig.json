@@ -12,6 +12,6 @@
     "noEmit": true,
     "allowSyntheticDefaultImports": true
   },
-  "include": ["*.ts"],
+  "include": ["src/*.ts"],
   "exclude": ["node_modules", "tests"]
 }
