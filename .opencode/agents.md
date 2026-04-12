@@ -27,8 +27,8 @@ cat ~/.config/opencode-bot/.env
 
 # 2. Link plugin locally (opencode.json in config dir)
 {
-  "plugin": ["./path/to/telegram-bot-plugin/telegram.ts"],
-  "instructions": ["./path/to/telegram-bot-plugin/AGENTS.md"]
+  "plugin": ["./path/to/telegram-bot-plugin/src/telegram.ts"],
+  "instructions": ["./path/to/telegram-bot-plugin/src/AGENTS.md"]
 }
 
 # 3. Restart opencode and message bot on Telegram
@@ -61,8 +61,8 @@ Send to Telegram API
 ### Key Files
 | File | Purpose |
 |------|---------|
-| `telegram.ts` | Main plugin (~260 lines) - polling, streaming, session mgmt |
-| `AGENTS.md` | Bot runtime instructions (loaded by opencode) |
+| `src/telegram.ts` | Main plugin (~260 lines) - polling, streaming, session mgmt |
+| `src/AGENTS.md` | Bot runtime instructions (loaded by opencode) |
 | `.opencode/agents.md` | Developer guide (this file) |
 
 ## Code Conventions
@@ -145,7 +145,7 @@ opencode
 ### Verify Installation
 ```bash
 # Check plugin files are in place
-ls ~/.config/opencode-bot/plugins/
+ls ~/.config/opencode/plugins/
 
 # Verify credentials
 cat ~/.config/opencode-bot/.env
@@ -160,7 +160,7 @@ cat ~/.config/opencode-bot/.env
 | Plugin credentials | `~/.config/opencode-bot/.env` |
 | Bot runtime instructions | `~/.config/opencode-bot/AGENTS.md` |
 | Session persistence | `~/.config/opencode-bot/telegram-sessions.json` |
-| Plugin code | `~/.config/opencode-bot/plugins/telegram.ts` |
+| Plugin code | `~/.config/opencode/plugins/telegram.ts` |
 
 ## Environment Variables
 

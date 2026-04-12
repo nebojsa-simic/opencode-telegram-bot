@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Single-user Telegram bot plugin for opencode with streaming responses and persistent sessions",
   "type": "module",
-  "main": "./telegram.ts",
+  "main": "./src/telegram.ts",
   "scripts": {
     "test": "node --test --experimental-test-coverage tests/*.test.js",
     "typecheck": "tsc --noEmit",
@@ -39,8 +39,7 @@
     "node": ">=18.0.0"
   },
   "files": [
-    "telegram.ts",
-    "AGENTS.md",
+    "src/",
     "README.md"
   ]
 }

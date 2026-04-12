@@ -20,8 +20,8 @@ Install the opencode-telegram-bot plugin for me. Do these steps in order, asking
    - Create `~/.config/opencode/plugins/` directory
    - Create `~/.config/opencode-bot/` directory if it doesn't exist
    - Clone from https://github.com/nebojsa-simic/opencode-telegram-bot/
-   - Copy telegram.ts to ~/.config/opencode/plugins/
-   - Copy AGENTS.md to ~/.config/opencode-bot/
+   - Copy src/telegram.ts to ~/.config/opencode/plugins/telegram.ts
+   - Copy src/AGENTS.md to ~/.config/opencode-bot/AGENTS.md
 
 4. **Configure opencode.json:**
    - Check if `~/.config/opencode/opencode.json` exists
