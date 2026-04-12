@@ -34,17 +34,10 @@ cat ~/.config/opencode-bot/.env
 # 3. Restart opencode and message bot on Telegram
 ```
 
-### Service Testing
-```bash
-# Check if running (Linux)
-sudo systemctl status opencode-bot
-
-# View live logs
-sudo journalctl -u opencode-bot -f
-
-# Restart after changes
-sudo systemctl restart opencode-bot
-```
+### After Pushing Changes
+Check CI status at https://github.com/nebojsa-simic/opencode-telegram-bot/actions
+- Wait for all workflow runs to pass (tests + typecheck on Node 18, 20, 22)
+- If CI fails, fix before deploying
 
 ## Architecture Overview
 
@@ -68,9 +61,7 @@ Send to Telegram API
 ### Key Files
 | File | Purpose |
 |------|---------|
-| `telegram.ts` | Main plugin (432 lines) - polling, streaming, session mgmt |
-| `mcp-deferred.ts` | Lazy-loads MCP servers on-demand |
-| `setup-service.sh` | Auto-installs systemd/launchd service |
+| `telegram.ts` | Main plugin (~260 lines) - polling, streaming, session mgmt |
 | `AGENTS.md` | Bot runtime instructions (loaded by opencode) |
 | `.opencode/agents.md` | Developer guide (this file) |
 
@@ -78,18 +69,17 @@ Send to Telegram API
 
 ### TypeScript Style
 - No comments in production code (except JSDoc for exports)
-- Use `console.log()` for debug output (prefixed with "Telegram: ")
-- Use `console.error()` for errors
 - Async/await only (no raw Promises)
 - Type all function signatures
+- KISS principle - keep it simple, no unnecessary features
 
 ### Error Handling Pattern
 ```typescript
 try {
-  await client.session.prompt(..., { signal: AbortSignal.timeout(60000) })
+  await client.session.prompt({...})
 } catch (error: any) {
   if (error.name === "AbortError" || error.message?.includes("timeout")) {
-    // Analyze cause and retry with simplified prompt
+    // Retry with simplified prompt
   } else {
     // Send error to user
   }
@@ -113,15 +103,15 @@ if (buffer.isReady()) {
 
 **Bot not responding:**
 1. Check credentials: `cat ~/.config/opencode-bot/.env`
-2. Check service: `sudo systemctl status opencode-bot`
-3. Check logs: `sudo journalctl -u opencode-bot -f`
+2. Check opencode is running: `pgrep -f opencode`
+3. Restart opencode: `pkill -f opencode && opencode`
 
 **Session not persisting:**
 - Verify `telegram-sessions.json` exists in plugin directory
 - Check file permissions
 
 **Timeout errors:**
-- Default: 60s timeout, retries with 30s + simplified prompt
+- Default: 60s timeout, retries with simplified prompt
 - Check if external API calls or file operations are hanging
 - Recovery logic analyzes error type (network, file, generation)
 
@@ -137,10 +127,10 @@ Before committing changes:
 - [ ] Bot responds to messages on Telegram
 - [ ] Sessions persist across restarts
 - [ ] Timeout recovery works (test with long-running prompt)
-- [ ] Commands work: /clear, /session, /queue
-- [ ] Service restarts cleanly
+- [ ] Commands work: /clear, /session
 - [ ] No memory leaks (check queue size stays ≤8)
 - [ ] **Single-user enforcement works** (verify ALLOWLIST validation)
+- [ ] **CI passes** - tests + typecheck on Node 18, 20, 22
 
 ## Deployment
 
@@ -148,12 +138,19 @@ Before committing changes:
 ```bash
 cd ~/telegram-bot-plugin
 git pull
-sudo systemctl restart opencode-bot
+pkill -f opencode
+opencode
 ```
 
-### Manual Service Setup
+### Verify Installation
 ```bash
-./setup-service.sh
+# Check plugin files are in place
+ls ~/.config/opencode-bot/plugins/
+
+# Verify credentials
+cat ~/.config/opencode-bot/.env
+
+# Test bot by sending a message on Telegram
 ```
 
 ## Configuration Locations
@@ -163,8 +160,7 @@ sudo systemctl restart opencode-bot
 | Plugin credentials | `~/.config/opencode-bot/.env` |
 | Bot runtime instructions | `~/.config/opencode-bot/AGENTS.md` |
 | Session persistence | `~/.config/opencode-bot/telegram-sessions.json` |
-| Service logs (Linux) | `journalctl -u opencode-bot` |
-| Service logs (macOS) | `~/.config/opencode-bot/opencode.log` |
+| Plugin code | `~/.config/opencode-bot/plugins/telegram.ts` |
 
 ## Environment Variables
 
@@ -176,9 +172,10 @@ sudo systemctl restart opencode-bot
 
 ## Recent Changes
 
+- **KISS simplification** - Removed mcp-deferred.ts, service setup, console.logs
+- **CI/CD pipeline** - GitHub Actions with tests + typecheck on Node 18, 20, 22
 - **Single-user enforcement** - Added startup validation and runtime checks
 - Removed memory/SQLite features (moved to separate repo)
-- Added `setup-service.sh` for easy 24/7 deployment
 - Improved timeout recovery with error analysis
 - Fixed streamingSessions memory leak on error paths
 - Made AGENTS.md a template (chat ID from env var, not hardcoded)
