@@ -170,8 +170,8 @@ export const TelegramPlugin: Plugin = async ({ client }) => {
         telegram_send: tool({
           description: "Send a Telegram message (not configured)",
           args: {
-            chatId: z.string(),
-            message: z.string()
+            chatId: z.string() as any,
+            message: z.string() as any
           },
           execute: async () => {
             return "Telegram bot not configured. Please set TELEGRAM_BOT_TOKEN in ~/.config/opencode-bot/.env"
@@ -194,8 +194,8 @@ export const TelegramPlugin: Plugin = async ({ client }) => {
         telegram_send: tool({
           description: "Send a Telegram message (not configured)",
           args: {
-            chatId: z.string(),
-            message: z.string()
+            chatId: z.string() as any,
+            message: z.string() as any
           },
           execute: async () => {
             return "Telegram bot not configured. Please set TELEGRAM_ALLOWLIST in ~/.config/opencode-bot/.env"
@@ -263,10 +263,17 @@ export const TelegramPlugin: Plugin = async ({ client }) => {
       console.log(`Telegram: Processing message from ${chatId} (session: ${sessionId.substring(0, 15)})`)
       
       // 60-second timeout on prompt
-      await client.session.prompt({
-        path: { id: sessionId },
-        body: { parts: [{ type: "text", text }] }
-      }, { signal: AbortSignal.timeout(60000) })
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 60000)
+      
+      try {
+        await client.session.prompt({
+          path: { id: sessionId },
+          body: { parts: [{ type: "text", text }] }
+        }, { signal: controller.signal } as any)
+      } finally {
+        clearTimeout(timeoutId)
+      }
       
       // Send final remainder
       const streaming = streamingSessions[sessionId]
@@ -308,10 +315,17 @@ export const TelegramPlugin: Plugin = async ({ client }) => {
           streamingSessions[sessionId] = { chatId, buffer: new DeltaTextBuffer(300) }
           const simplifiedPrompt = `Provide a concise answer (under 100 words) to: ${text.substring(0, 200)}`
           
-          await client.session.prompt({
-            path: { id: sessionId },
-            body: { parts: [{ type: "text", text: simplifiedPrompt }] }
-          }, { signal: AbortSignal.timeout(30000) })
+          const retryController = new AbortController()
+          const retryTimeoutId = setTimeout(() => retryController.abort(), 30000)
+          
+          try {
+            await client.session.prompt({
+              path: { id: sessionId },
+              body: { parts: [{ type: "text", text: simplifiedPrompt }] }
+            }, { signal: retryController.signal } as any)
+          } finally {
+            clearTimeout(retryTimeoutId)
+          }
           
           const streaming = streamingSessions[sessionId]
           if (streaming) {
@@ -357,7 +371,7 @@ export const TelegramPlugin: Plugin = async ({ client }) => {
     while (true) {
       try {
         const res = await fetch(`${BOT_API}/getUpdates?offset=${lastUpdateId + 1}&timeout=30`)
-        const data = await res.json()
+        const data = await res.json() as any
         if (!data.ok) continue
         
         for (const update of data.result || []) {
@@ -434,10 +448,10 @@ export const TelegramPlugin: Plugin = async ({ client }) => {
   const telegramSendTool = tool({
     description: "Send a proactive Telegram message",
     args: {
-      chatId: z.string(),
-      message: z.string()
+      chatId: z.string() as any,
+      message: z.string() as any
     },
-    execute: async ({ chatId, message }) => {
+    execute: async ({ chatId, message }: any) => {
       // Single-user design: only allow the configured chat ID
       if (CONFIG.ALLOWLIST[0] !== chatId) {
         return `Error: Chat ${chatId} not allowed. This bot supports one user only (configured: ${CONFIG.ALLOWLIST[0]})`
@@ -448,7 +462,8 @@ export const TelegramPlugin: Plugin = async ({ client }) => {
   })
 
   return {
-    event: async ({ event }) => {
+    event: async (args: any) => {
+      const event = args.event
       if (event.type !== "message.part.delta") return
       
       const props = event.properties || {}
