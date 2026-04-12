@@ -17,7 +17,7 @@ Install the opencode-telegram-bot plugin for me. Do these steps in order, asking
    - Set CI=true
 
 3. **Clone and install the plugin:**
-   - Clone from github:nebojsa-simic/opencode-telegram-bot
+   - Clone from https://github.com/nebojsa-simic/opencode-telegram-bot/
    - Create `~/.config/opencode-bot/plugins/` directory
    - Copy telegram.ts to plugins/
    - Copy AGENTS.md to ~/.config/opencode-bot/

@@ -28,7 +28,7 @@ Install the opencode-telegram-bot plugin for me. Do these steps in order, asking
 
 1. Get my Telegram credentials (bot token from @BotFather, chat ID from getUpdates)
 2. Create ~/.config/opencode-bot/.env with TELEGRAM_BOT_TOKEN, TELEGRAM_ALLOWLIST, CI=true
-3. Clone the plugin repo and copy telegram.ts to ~/.config/opencode-bot/plugins/
+3. Clone https://github.com/nebojsa-simic/opencode-telegram-bot/ and copy telegram.ts to ~/.config/opencode-bot/plugins/
 4. Add plugin path to ~/.config/opencode/opencode.json: "./plugins/telegram.ts"
 5. Run npm install and restart opencode
 6. Test the bot
