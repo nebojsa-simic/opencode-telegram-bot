@@ -123,3 +123,27 @@ TELEGRAM_ALLOWLIST=your_chat_id_here
 ## License
 
 MIT
+
+## Development
+
+### Running Tests
+
+```bash
+npm test
+```
+
+This runs the test suite which covers:
+
+1. **Queue processor** - Ensures `isProcessing` flag always resets (catches lockup bugs)
+2. **Streaming sessions** - Verifies sessions aren't deleted prematurely (catches streaming bugs)
+3. **Single-user enforcement** - Validates ALLOWLIST configuration and authorization
+
+### Test Coverage
+
+The tests specifically target the bugs we've encountered:
+
+- ✅ Queue processor lockup on synchronous errors
+- ✅ Streaming session premature cleanup
+- ✅ ALLOWLIST validation and enforcement
+
+Add new tests for any error paths or state management changes.
