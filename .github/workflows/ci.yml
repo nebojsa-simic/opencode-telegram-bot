@@ -31,4 +31,3 @@ jobs:
       
       - name: Check TypeScript types
         run: npm run typecheck
-        if: matrix.node-version == '20.x' || matrix.node-version == '22.x'
