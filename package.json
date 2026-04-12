@@ -1,11 +1,12 @@
 {
   "name": "opencode-telegram-bot",
   "version": "1.0.0",
-  "type": "module",
   "description": "Single-user Telegram bot plugin for opencode with streaming responses and persistent sessions",
-  "main": "telegram.ts",
+  "type": "module",
+  "main": "./telegram.ts",
   "scripts": {
-    "test": "node --test --experimental-test-coverage tests/*.test.js"
+    "test": "node --test --experimental-test-coverage tests/*.test.js",
+    "postinstall": "echo '✅ opencode-telegram-bot installed! See README.md for setup instructions.'"
   },
   "repository": {
     "type": "git",
@@ -13,9 +14,11 @@
   },
   "keywords": [
     "opencode",
+    "opencode-plugin",
     "telegram",
-    "bot",
-    "plugin"
+    "telegram-bot",
+    "ai",
+    "chatbot"
   ],
   "author": "Nebojša Simić",
   "license": "MIT",
@@ -24,9 +27,20 @@
   },
   "homepage": "https://github.com/nebojsa-simic/opencode-telegram-bot#readme",
   "dependencies": {
-    "@opencode-ai/plugin": "1.3.17"
+    "@opencode-ai/plugin": "1.3.17",
+    "zod": "^3.22.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0"
-  }
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "telegram.ts",
+    "mcp-deferred.ts",
+    "AGENTS.md",
+    "README.md",
+    "install.sh"
+  ]
 }
