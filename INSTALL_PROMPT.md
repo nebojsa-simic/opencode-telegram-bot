@@ -16,16 +16,17 @@ Install the opencode-telegram-bot plugin for me. Do these steps in order, asking
    - Add TELEGRAM_BOT_TOKEN and TELEGRAM_ALLOWLIST with my credentials
    - Set CI=true
 
-3. **Clone and copy plugin files:**
+3. **Create directories and copy plugin files:**
+   - Create `~/.config/opencode/plugins/` directory
+   - Create `~/.config/opencode-bot/` directory if it doesn't exist
    - Clone from https://github.com/nebojsa-simic/opencode-telegram-bot/
-   - Create `~/.config/opencode-bot/plugins/` directory
-   - Copy telegram.ts to plugins/
+   - Copy telegram.ts to ~/.config/opencode/plugins/
    - Copy AGENTS.md to ~/.config/opencode-bot/
 
 4. **Configure opencode.json:**
    - Check if `~/.config/opencode/opencode.json` exists
-   - If it exists: add "./plugins/telegram.ts" to plugin array and "AGENTS.md" to instructions array
-   - If it doesn't exist: create it with `{"$schema": "https://opencode.ai/config.json", "plugin": ["./plugins/telegram.ts"], "instructions": ["AGENTS.md"]}`
+   - If it exists: add "./plugins/telegram.ts" to plugin array and "../opencode-bot/AGENTS.md" to instructions array
+   - If it doesn't exist: create it with `{"$schema": "https://opencode.ai/config.json", "plugin": ["./plugins/telegram.ts"], "instructions": ["../opencode-bot/AGENTS.md"]}`
 
 5. **Install dependencies:**
    - Run npm install in the cloned repo directory

@@ -28,11 +28,11 @@ Install the opencode-telegram-bot plugin for me. Do these steps in order, asking
 
 1. Get my Telegram credentials (bot token from @BotFather, chat ID from getUpdates)
 2. Create ~/.config/opencode-bot/.env with TELEGRAM_BOT_TOKEN, TELEGRAM_ALLOWLIST, CI=true
-3. Clone https://github.com/nebojsa-simic/opencode-telegram-bot/ and copy telegram.ts to ~/.config/opencode-bot/plugins/
-4. Add plugin to ~/.config/opencode/opencode.json:
-   - Create file if missing: {"$schema": "https://opencode.ai/config.json", "plugin": ["./plugins/telegram.ts"], "instructions": ["AGENTS.md"]}
-   - Or add "./plugins/telegram.ts" to existing plugin array and "AGENTS.md" to instructions
-5. Copy AGENTS.md to ~/.config/opencode-bot/
+3. Create ~/.config/opencode/plugins/ directory
+4. Clone https://github.com/nebojsa-simic/opencode-telegram-bot/ and copy telegram.ts to ~/.config/opencode/plugins/
+5. Add plugin to ~/.config/opencode/opencode.json:
+   - Create file if missing: {"$schema": "https://opencode.ai/config.json", "plugin": ["./plugins/telegram.ts"], "instructions": ["../opencode-bot/AGENTS.md"]}
+   - Or add "./plugins/telegram.ts" to existing plugin array and "../opencode-bot/AGENTS.md" to instructions
 6. Copy AGENTS.md to ~/.config/opencode-bot/
 7. Run npm install in the cloned repo directory
 8. **Restart opencode manually:** Once these steps complete, close this opencode session and restart it fresh
@@ -53,20 +53,21 @@ opencode will walk you through the entire installation interactively.
 git clone https://github.com/nebojsa-simic/opencode-telegram-bot.git
 cd opencode-telegram-bot
 
-# Copy to config directory
-mkdir -p ~/.config/opencode-bot/plugins
-cp telegram.ts ~/.config/opencode-bot/plugins/
+# Copy to config directories
+mkdir -p ~/.config/opencode/plugins
+mkdir -p ~/.config/opencode-bot
+cp telegram.ts ~/.config/opencode/plugins/
 cp AGENTS.md ~/.config/opencode-bot/
 ```
 
 **2. Create config:**
 
 ```bash
-cat > ~/.config/opencode-bot/opencode.json << EOF
+cat > ~/.config/opencode/opencode.json << EOF
 {
   "\$schema": "https://opencode.ai/config.json",
   "plugin": ["./plugins/telegram.ts"],
-  "instructions": ["AGENTS.md"]
+  "instructions": ["../opencode-bot/AGENTS.md"]
 }
 EOF
 ```
