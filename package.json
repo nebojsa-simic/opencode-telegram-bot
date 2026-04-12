@@ -41,7 +41,6 @@
   "files": [
     "telegram.ts",
     "AGENTS.md",
-    "README.md",
-    "install.sh"
+    "README.md"
   ]
 }
