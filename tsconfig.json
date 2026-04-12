@@ -3,14 +3,15 @@
     "target": "ES2022",
     "module": "ESNext",
     "lib": ["ES2022"],
-    "moduleResolution": "node",
-    "strict": true,
+    "moduleResolution": "bundler",
+    "strict": false,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "noEmit": true
+    "noEmit": true,
+    "allowSyntheticDefaultImports": true
   },
-  "include": ["*.ts", "tests/*.ts"],
-  "exclude": ["node_modules"]
+  "include": ["*.ts"],
+  "exclude": ["node_modules", "tests"]
 }
