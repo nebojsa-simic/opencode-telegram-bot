@@ -28,11 +28,10 @@ Install the opencode-telegram-bot plugin for me. Do these steps in order, asking
 
 1. Get my Telegram credentials (bot token from @BotFather, chat ID from getUpdates)
 2. Create ~/.config/opencode-bot/.env with TELEGRAM_BOT_TOKEN, TELEGRAM_ALLOWLIST, CI=true
-3. Clone the plugin repo and copy files to ~/.config/opencode-bot/plugins/
-4. Add plugin paths to ~/.config/opencode/opencode.json: "./plugins/telegram.ts", "./plugins/mcp-deferred.ts"
-5. Run npm install in the plugin directory
-6. Set up 24/7 service (systemd on Linux, launchd on macOS)
-7. Test the bot
+3. Clone the plugin repo and copy telegram.ts to ~/.config/opencode-bot/plugins/
+4. Add plugin path to ~/.config/opencode/opencode.json: "./plugins/telegram.ts"
+5. Run npm install and restart opencode
+6. Test the bot
 
 Start with step 1. Guide me through each step, waiting for confirmation before proceeding.
 ```
@@ -53,7 +52,6 @@ The installer will:
 - Clone the repository
 - Copy plugin files to your config directory
 - Create config templates
-- Optionally set up 24/7 service (systemd/launchd)
 
 ---
 
@@ -83,7 +81,6 @@ cd opencode-telegram-bot
 # Copy to config directory
 mkdir -p ~/.config/opencode-bot/plugins
 cp telegram.ts ~/.config/opencode-bot/plugins/
-cp mcp-deferred.ts ~/.config/opencode-bot/plugins/
 cp AGENTS.md ~/.config/opencode-bot/
 ```
 
@@ -93,10 +90,7 @@ cp AGENTS.md ~/.config/opencode-bot/
 cat > ~/.config/opencode-bot/opencode.json << EOF
 {
   "\$schema": "https://opencode.ai/config.json",
-  "plugin": [
-    "./plugins/mcp-deferred.ts",
-    "./plugins/telegram.ts"
-  ],
+  "plugin": ["./plugins/telegram.ts"],
   "instructions": ["AGENTS.md"]
 }
 EOF
@@ -141,99 +135,7 @@ CI=true
 
 > ⚠️ **Single-User Design:** This bot supports **exactly one user**. The `TELEGRAM_ALLOWLIST` must contain only your chat ID.
 
-### 3. Set Up 24/7 Service (Optional)
-
-**Linux (systemd):**
-
-```bash
-# Create service file
-sudo tee /etc/systemd/system/opencode-bot.service > /dev/null << EOF
-[Unit]
-Description=Opencode Telegram Bot
-After=network.target network-online.target
-
-[Service]
-Type=simple
-User=$(whoami)
-WorkingDirectory=$HOME
-ExecStart=$HOME/.opencode/bin/opencode
-Restart=always
-RestartSec=10
-MemoryMax=2G
-MemoryHigh=1536M
-Environment=OPENCODE_CONFIG_DIR=$HOME/.config/opencode-bot
-Environment=CI=true
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-# Enable and start
-sudo systemctl daemon-reload
-sudo systemctl enable opencode-bot
-sudo systemctl start opencode-bot
-
-# Check status
-sudo systemctl status opencode-bot
-sudo journalctl -u opencode-bot -f
-```
-
-**macOS (launchd):**
-
-```bash
-# Create plist file
-mkdir -p ~/Library/LaunchAgents
-cat > ~/Library/LaunchAgents/com.opencode.bot.plist << EOF
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>Label</key>
-    <string>com.opencode.bot</string>
-    <key>ProgramArguments</key>
-    <array>
-        <string>$HOME/.opencode/bin/opencode</string>
-    </array>
-    <key>WorkingDirectory</key>
-    <string>$HOME</string>
-    <key>RunAtLoad</key>
-    <true/>
-    <key>KeepAlive</key>
-    <true/>
-    <key>EnvironmentVariables</key>
-    <dict>
-        <key>OPENCODE_CONFIG_DIR</key>
-        <string>$HOME/.config/opencode-bot</string>
-        <key>CI</key>
-        <string>true</string>
-    </dict>
-</dict>
-</plist>
-EOF
-
-# Load service
-launchctl load ~/Library/LaunchAgents/com.opencode.bot.plist
-
-# Check status
-launchctl list | grep opencode
-```
-
-**Windows (Task Scheduler):**
-
-```powershell
-# Create scheduled task
-$action = New-ScheduledTaskAction -Execute "$env:USERPROFILE\.opencode\bin\opencode.exe"
-$trigger = New-ScheduledTaskTrigger -AtLogon
-$settings = New-ScheduledTaskSettingsSet -RestartCount 999 -RestartInterval (New-TimeSpan -Minutes 1)
-$envVars = @()
-$envVars += New-ScheduledTaskAction -Execute "setx" -Argument "OPENCODE_CONFIG_DIR `"$env:APPDATA\opencode-bot`""
-
-Register-ScheduledTask -TaskName "OpencodeBot" -Action $action -Trigger $trigger -Settings $settings -RunLevel Highest
-```
-
-### 4. Restart opencode
-
-If not running as a service:
+### 3. Restart opencode
 
 ```bash
 # Kill existing opencode
@@ -276,13 +178,9 @@ Get-ScheduledTask -TaskName OpencodeBot | Get-ScheduledTaskInfo
 
 ### Bot not responding?
 
-1. **Check service status:**
+1. **Check opencode is running:**
    ```bash
-   # Linux
-   sudo systemctl status opencode-bot
-   
-   # macOS
-   launchctl list | grep opencode
+   pgrep -f opencode
    ```
 
 2. **Verify .env file exists:**
@@ -290,18 +188,15 @@ Get-ScheduledTask -TaskName OpencodeBot | Get-ScheduledTaskInfo
    cat ~/.config/opencode-bot/.env
    ```
 
-3. **Check logs:**
-   ```bash
-   # Linux
-   sudo journalctl -u opencode-bot -f
-   
-   # macOS
-   tail -f ~/.config/opencode-bot/opencode.log
-   ```
-
-4. **Test credentials:**
+3. **Test credentials:**
    ```bash
    curl "https://api.telegram.org/bot<YOUR_TOKEN>/getMe"
+   ```
+
+4. **Restart opencode:**
+   ```bash
+   pkill -f opencode
+   opencode
    ```
 
 ### "Session timed out" errors?
@@ -347,7 +242,6 @@ Test coverage:
 | File | Purpose |
 |------|---------|
 | `telegram.ts` | Main plugin (polling, streaming, sessions) |
-| `mcp-deferred.ts` | Lazy-loads MCP servers on-demand |
 | `install.sh` | Cross-platform installer |
 | `tests/` | Test suite |
 
@@ -358,7 +252,6 @@ Test coverage:
 3. Copy to config dir for testing:
    ```bash
    cp telegram.ts ~/.config/opencode-bot/plugins/
-   sudo systemctl restart opencode-bot
    ```
 4. Test on Telegram
 5. Commit and push

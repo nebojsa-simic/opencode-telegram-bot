@@ -40,7 +40,6 @@
   },
   "files": [
     "telegram.ts",
-    "mcp-deferred.ts",
     "AGENTS.md",
     "README.md",
     "install.sh"

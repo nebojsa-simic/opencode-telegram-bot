@@ -5,17 +5,14 @@ import * as fs from "fs"
 import * as path from "path"
 
 function loadEnvFile() {
-  // Try multiple locations for .env file
   const possiblePaths = [
     path.join(path.dirname(__dirname), ".env"),
     path.join(process.env.HOME || "", ".config", "opencode-bot", ".env"),
-    path.join(process.env.HOME || "", ".config", "opencode", ".env"),
   ]
   
   for (const envPath of possiblePaths) {
     try {
       if (fs.existsSync(envPath)) {
-        console.log(`Telegram plugin: Loading .env from ${envPath}`)
         const content = fs.readFileSync(envPath, "utf-8")
         content.split("\n").forEach(line => {
           const [key, ...valueParts] = line.split("=")
@@ -25,37 +22,27 @@ function loadEnvFile() {
         })
         return
       }
-    } catch (error) {
-      console.error(`Failed to load .env from ${envPath}:`, error)
-    }
+    } catch {}
   }
-  console.log("Telegram plugin: No .env file found in expected locations")
 }
 
 loadEnvFile()
 
-// Persisted session storage
 const SESSION_FILE = path.join(path.dirname(__dirname), "telegram-sessions.json")
 
 function loadSessions(): Map<string, string> {
   try {
     if (fs.existsSync(SESSION_FILE)) {
-      const data = JSON.parse(fs.readFileSync(SESSION_FILE, "utf-8"))
-      return new Map(Object.entries(data))
+      return new Map(Object.entries(JSON.parse(fs.readFileSync(SESSION_FILE, "utf-8"))))
     }
-  } catch (e) {
-    console.error("Failed to load sessions:", e)
-  }
+  } catch {}
   return new Map()
 }
 
 function saveSessions(sessions: Map<string, string>) {
   try {
-    const data = Object.fromEntries(sessions)
-    fs.writeFileSync(SESSION_FILE, JSON.stringify(data, null, 2))
-  } catch (e) {
-    console.error("Failed to save sessions:", e)
-  }
+    fs.writeFileSync(SESSION_FILE, JSON.stringify(Object.fromEntries(sessions), null, 2))
+  } catch {}
 }
 
 class DeltaTextBuffer {
@@ -65,16 +52,13 @@ class DeltaTextBuffer {
   #encoder = new TextEncoder()
 
   constructor(threshold: number) {
-    if (!Number.isInteger(threshold) || threshold <= 0) {
-      throw new TypeError("threshold must be a positive integer")
-    }
     this.#threshold = threshold
   }
 
   push(delta: string) {
-    if (typeof delta !== "string" || delta.length === 0) return
+    if (!delta) return
     this.#chunks.push(delta)
-    this.#byteLength += this.#bytes(delta)
+    this.#byteLength += this.#encoder.encode(delta).length
   }
 
   isReady() {
@@ -95,25 +79,19 @@ class DeltaTextBuffer {
 
     const softCut = this.#lastBoundaryBefore(text, hardCut)
     const cut = softCut ?? hardCut
-
     const out = text.slice(0, cut)
     const rest = text.slice(cut)
 
     this.#chunks = rest ? [rest] : []
-    this.#byteLength = this.#bytes(rest)
-
+    this.#byteLength = this.#encoder.encode(rest).length
     return out
-  }
-
-  #bytes(str: string) {
-    return this.#encoder.encode(str).length
   }
 
   #indexAtByteLimit(text: string, limit: number) {
     let bytes = 0
     let index = 0
     for (const ch of text) {
-      const size = this.#bytes(ch)
+      const size = this.#encoder.encode(ch).length
       if (bytes + size > limit) break
       bytes += size
       index += ch.length
@@ -123,33 +101,23 @@ class DeltaTextBuffer {
 
   #lastBoundaryBefore(text: string, endExclusive: number) {
     const candidate = text.slice(0, endExclusive)
-    const comma = candidate.lastIndexOf(",")
-    const period = candidate.lastIndexOf(".")
-    const pos = Math.max(comma, period)
+    const pos = Math.max(candidate.lastIndexOf(","), candidate.lastIndexOf("."))
     return pos === -1 ? null : pos + 1
   }
 }
 
-// Message queue (max 8 messages)
 interface QueuedMessage {
   chatId: string
   text: string
-  timestamp: number
   replyTo?: number
 }
 
 const messageQueue: QueuedMessage[] = []
-const MAX_QUEUE_SIZE = 8
-
-// Active streaming sessions
 const streamingSessions: Record<string, { chatId: string, buffer: DeltaTextBuffer }> = {}
-// Persistent chat-to-session mapping
 const chatSessions = loadSessions()
-// Track if currently processing
 let isProcessing = false
 
 export const TelegramPlugin: Plugin = async ({ client }) => {
-  // Reload env to get latest credentials
   loadEnvFile()
   
   const CONFIG = {
@@ -157,58 +125,16 @@ export const TelegramPlugin: Plugin = async ({ client }) => {
     ALLOWLIST: process.env.TELEGRAM_ALLOWLIST?.split(",") || []
   }
 
-  if (!CONFIG.TOKEN) {
-    console.error("Telegram plugin: TELEGRAM_BOT_TOKEN not set!")
-    console.error("Telegram plugin: Please create ~/.config/opencode-bot/.env with:")
-    console.error("  TELEGRAM_BOT_TOKEN=your_bot_token_here")
-    console.error("  TELEGRAM_ALLOWLIST=your_chat_id_here")
-    console.error("Telegram plugin: Plugin will not function until credentials are set.")
-    
-    // Return a plugin that shows error on any Telegram command
+  if (!CONFIG.TOKEN || CONFIG.ALLOWLIST.length === 0) {
     return {
       tool: {
         telegram_send: tool({
           description: "Send a Telegram message (not configured)",
-          args: {
-            chatId: z.string() as any,
-            message: z.string() as any
-          },
-          execute: async () => {
-            return "Telegram bot not configured. Please set TELEGRAM_BOT_TOKEN in ~/.config/opencode-bot/.env"
-          }
+          args: { chatId: z.string() as any, message: z.string() as any },
+          execute: async () => "Telegram not configured. Set TELEGRAM_BOT_TOKEN and TELEGRAM_ALLOWLIST in ~/.config/opencode-bot/.env"
         })
       }
     }
-  }
-
-  // Enforce single-user requirement
-  if (CONFIG.ALLOWLIST.length === 0) {
-    console.error("Telegram plugin: TELEGRAM_ALLOWLIST is required!")
-    console.error("Telegram plugin: This bot supports ONE user only.")
-    console.error("Telegram plugin: Add your chat ID to ~/.config/opencode-bot/.env:")
-    console.error("  TELEGRAM_ALLOWLIST=your_chat_id_here")
-    console.error("Telegram plugin: Plugin will not function until configured.")
-    
-    return {
-      tool: {
-        telegram_send: tool({
-          description: "Send a Telegram message (not configured)",
-          args: {
-            chatId: z.string() as any,
-            message: z.string() as any
-          },
-          execute: async () => {
-            return "Telegram bot not configured. Please set TELEGRAM_ALLOWLIST in ~/.config/opencode-bot/.env"
-          }
-        })
-      }
-    }
-  }
-
-  if (CONFIG.ALLOWLIST.length > 1) {
-    console.warn("Telegram plugin: Multiple chat IDs detected. This bot is designed for ONE user only.")
-    console.warn(`Telegram plugin: Using first ID: ${CONFIG.ALLOWLIST[0]}`)
-    console.warn("Telegram plugin: Remove additional IDs from TELEGRAM_ALLOWLIST to avoid unexpected behavior.")
   }
 
   const BOT_API = `https://api.telegram.org/bot${CONFIG.TOKEN}`
@@ -220,35 +146,21 @@ export const TelegramPlugin: Plugin = async ({ client }) => {
       await fetch(`${BOT_API}/sendMessage`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text,
-          reply_to_message_id: replyTo
-        })
+        body: JSON.stringify({ chat_id: chatId, text, reply_to_message_id: replyTo })
       })
-    } catch (e) {
-      console.error("Telegram send error:", e)
-    }
+    } catch {}
   }
 
   async function getOrCreateSession(chatId: string): Promise<string> {
     const existing = chatSessions.get(chatId)
-    if (existing) {
-      console.log(`Telegram: Reusing session ${existing.substring(0, 15)} for chat ${chatId}`)
-      return existing
-    }
+    if (existing) return existing
     
-    console.log(`Telegram: Creating new session for chat ${chatId}`)
     const result = await client.session.create()
     const sessionId = result.data?.id
-    
-    if (!sessionId) {
-      throw new Error("Failed to create session")
-    }
+    if (!sessionId) throw new Error("Failed to create session")
     
     chatSessions.set(chatId, sessionId)
     saveSessions(chatSessions)
-    console.log(`Telegram: Session ${sessionId.substring(0, 15)} created for chat ${chatId}`)
     return sessionId
   }
 
@@ -260,80 +172,37 @@ export const TelegramPlugin: Plugin = async ({ client }) => {
       sessionId = await getOrCreateSession(chatId)
       streamingSessions[sessionId] = { chatId, buffer: new DeltaTextBuffer(300) }
       
-      console.log(`Telegram: Processing message from ${chatId} (session: ${sessionId.substring(0, 15)})`)
+      await client.session.prompt({
+        path: { id: sessionId },
+        body: { parts: [{ type: "text", text }] }
+      })
       
-      // 60-second timeout on prompt
-      try {
-        await client.session.prompt({
-          path: { id: sessionId },
-          body: { parts: [{ type: "text", text }] }
-        })
-      } catch (promptError: any) {
-        if (promptError.name === "AbortError" || promptError.message?.includes("timeout")) {
-          throw promptError
-        }
-        throw promptError
-      }
-      
-      // Send final remainder
       const streaming = streamingSessions[sessionId]
       if (streaming) {
         const remainder = streaming.buffer.get()
-        if (remainder.trim()) {
-          await sendMessage(chatId, remainder.trim(), replyTo)
-        }
+        if (remainder.trim()) await sendMessage(chatId, remainder.trim(), replyTo)
         delete streamingSessions[sessionId]
       }
-      
-      console.log(`Telegram: Completed message from ${chatId}`)
-      
     } catch (error: any) {
-      console.error("Telegram processing error:", error)
-      
-      // Handle timeout
       if (error.name === "AbortError" || error.message?.includes("timeout")) {
-        console.log(`Telegram: Timeout on message from ${chatId}, analyzing cause...`)
-        
-        // Analyze what might have caused the hang
-        let recoveryMessage = "That took too long. "
-        
-        if (text.includes("http://") || text.includes("https://")) {
-          recoveryMessage += "Network request likely timed out. Here's what I can do without external access: "
-        } else if (text.includes("file") || text.includes("write") || text.includes("save")) {
-          recoveryMessage += "File operation timed out. Let me provide the content directly instead: "
-        } else if (text.includes("create") || text.includes("generate")) {
-          recoveryMessage += "Generation timed out. Here's a condensed version: "
-        } else {
-          recoveryMessage += "Let me try a simpler approach: "
-        }
-        
-        await sendMessage(chatId, recoveryMessage, replyTo)
-        
-        // Retry with simpler context
+        await sendMessage(chatId, "That took too long. Try simplifying your request.", replyTo)
         try {
           sessionId = await getOrCreateSession(chatId)
           streamingSessions[sessionId] = { chatId, buffer: new DeltaTextBuffer(300) }
-          const simplifiedPrompt = `Provide a concise answer (under 100 words) to: ${text.substring(0, 200)}`
-          
           await client.session.prompt({
             path: { id: sessionId },
-            body: { parts: [{ type: "text", text: simplifiedPrompt }] }
+            body: { parts: [{ type: "text", `Concise answer to: ${text.substring(0, 200)}` }] }
           })
-          
           const streaming = streamingSessions[sessionId]
           if (streaming) {
             const remainder = streaming.buffer.get()
-            if (remainder.trim()) {
-              await sendMessage(chatId, remainder.trim(), replyTo)
-            }
+            if (remainder.trim()) await sendMessage(chatId, remainder.trim(), replyTo)
             delete streamingSessions[sessionId]
           }
-        } catch (retryError) {
-          console.error("Telegram: Recovery also failed:", retryError)
-          await sendMessage(chatId, "Still having trouble. Try simplifying your request.", replyTo)
+        } catch {
+          await sendMessage(chatId, "Still having trouble. Try again.", replyTo)
         }
       } else {
-        // Other errors
         await sendMessage(chatId, `❌ Error: ${error.message}`, replyTo)
       }
     } finally {
@@ -346,19 +215,13 @@ export const TelegramPlugin: Plugin = async ({ client }) => {
       if (messageQueue.length > 0 && !isProcessing) {
         isProcessing = true
         const msg = messageQueue.shift()
-        if (msg) {
-          processMessage(msg) // Don't await - allow overlapping processing
-        }
+        if (msg) processMessage(msg)
       }
       await new Promise(r => setTimeout(r, 100))
     }
   }
 
   async function poll() {
-    console.log("Telegram polling started")
-    console.log(`Telegram: Loaded ${chatSessions.size} persisted sessions`)
-    
-    // Start queue processor
     processQueue()
     
     while (true) {
@@ -376,61 +239,34 @@ export const TelegramPlugin: Plugin = async ({ client }) => {
           const text = msg.text.trim()
           const messageId = msg.message_id
           
-          // Single-user enforcement: reject messages from non-configured chat
           if (CONFIG.ALLOWLIST[0] !== chatId) {
-            console.warn(`Telegram: Ignoring message from unauthorized chat ${chatId}`)
-            await sendMessage(chatId, "This bot is configured for a single user. Your chat ID is not authorized.", messageId)
+            await sendMessage(chatId, "This bot is for a single user. Your chat ID is not authorized.", messageId)
             continue
           }
           
-          // Handle commands
           if (text === "/clear" || text === "/reset" || text === "/new") {
             const oldSessionId = chatSessions.get(chatId)
             if (oldSessionId) {
               chatSessions.delete(chatId)
               saveSessions(chatSessions)
-              console.log(`Telegram: Cleared session ${oldSessionId.substring(0, 15)} for chat ${chatId}`)
             }
-            await sendMessage(chatId, "✅ Session cleared! Starting fresh.", messageId)
+            await sendMessage(chatId, "✅ Session cleared!", messageId)
             continue
           }
           
           if (text === "/session") {
             const sessionId = chatSessions.get(chatId)
-            if (sessionId) {
-              await sendMessage(chatId, `Session: \`${sessionId.substring(0, 20)}...\`\n_Persists across restarts_`, messageId)
-            } else {
-              await sendMessage(chatId, "No active session. One will be created with your next message.", messageId)
-            }
+            await sendMessage(chatId, sessionId ? `Session: \`${sessionId.substring(0, 20)}...\`` : "No active session", messageId)
             continue
           }
           
-          if (text === "/queue") {
-            await sendMessage(chatId, `Queue: ${messageQueue.length} message(s) pending`, messageId)
-            continue
-          }
-          
-          // Acknowledge receipt
           await sendMessage(chatId, "🤔", messageId)
           
-          // Queue the message (max 8)
-          if (messageQueue.length >= MAX_QUEUE_SIZE) {
-            // Remove oldest if at capacity
-            messageQueue.shift()
-            console.log(`Telegram: Queue full, dropped oldest message`)
-          }
+          if (messageQueue.length >= 8) messageQueue.shift()
           
-          messageQueue.push({
-            chatId,
-            text,
-            timestamp: Date.now(),
-            replyTo: messageId
-          })
-          
-          console.log(`Telegram: Queued message from ${chatId} (queue size: ${messageQueue.length})`)
+          messageQueue.push({ chatId, text, replyTo: messageId })
         }
-      } catch (e: any) {
-        console.error("Telegram poll error:", e.message)
+      } catch {
         await new Promise(r => setTimeout(r, 3000))
       }
     }
@@ -440,15 +276,9 @@ export const TelegramPlugin: Plugin = async ({ client }) => {
 
   const telegramSendTool = tool({
     description: "Send a proactive Telegram message",
-    args: {
-      chatId: z.string() as any,
-      message: z.string() as any
-    },
+    args: { chatId: z.string() as any, message: z.string() as any },
     execute: async ({ chatId, message }: any) => {
-      // Single-user design: only allow the configured chat ID
-      if (CONFIG.ALLOWLIST[0] !== chatId) {
-        return `Error: Chat ${chatId} not allowed. This bot supports one user only (configured: ${CONFIG.ALLOWLIST[0]})`
-      }
+      if (CONFIG.ALLOWLIST[0] !== chatId) return `Error: Chat ${chatId} not authorized`
       await sendMessage(chatId, message)
       return "Sent"
     }
@@ -470,9 +300,7 @@ export const TelegramPlugin: Plugin = async ({ client }) => {
       
       if (streaming.buffer.isReady()) {
         const text = streaming.buffer.get()
-        if (text.trim()) {
-          await sendMessage(streaming.chatId, text.trim())
-        }
+        if (text.trim()) await sendMessage(streaming.chatId, text.trim())
       }
     },
     tool: { telegram_send: telegramSendTool }
