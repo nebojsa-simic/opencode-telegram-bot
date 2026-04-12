@@ -40,22 +40,7 @@ opencode will walk you through the entire installation interactively.
 
 ---
 
-### Option 2: Automatic Installer
-
-**Linux, macOS, Windows (Git Bash/WSL):**
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/nebojsa-simic/opencode-telegram-bot/main/install.sh | bash
-```
-
-The installer will:
-- Clone the repository
-- Copy plugin files to your config directory
-- Create config templates
-
----
-
-### Option 3: npm Package
+### Option 2: npm Package
 
 ```bash
 # Plugin will be auto-installed when opencode starts
@@ -70,7 +55,7 @@ Then configure the plugin as shown below.
 
 ---
 
-### Option 4: Manual Installation
+### Option 3: Manual Installation
 
 **1. Clone and copy:**
 
