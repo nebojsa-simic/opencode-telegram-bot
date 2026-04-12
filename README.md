@@ -44,22 +44,7 @@ opencode will walk you through the entire installation interactively.
 
 ---
 
-### Option 2: npm Package
-
-```bash
-# Plugin will be auto-installed when opencode starts
-# Add to your opencode.json:
-{
-  "$schema": "https://opencode.ai/config.json",
-  "plugin": ["opencode-telegram-bot"]
-}
-```
-
-Then configure the plugin as shown below.
-
----
-
-### Option 3: Manual Installation
+### Option 2: Manual Installation
 
 **1. Clone and copy:**
 
