@@ -16,19 +16,23 @@ Install the opencode-telegram-bot plugin for me. Do these steps in order, asking
    - Add TELEGRAM_BOT_TOKEN and TELEGRAM_ALLOWLIST with my credentials
    - Set CI=true
 
-3. **Add plugin to opencode:**
-   - Check if `~/.config/opencode/opencode.json` exists
-   - Add `"plugin": ["github:nebojsa-simic/opencode-telegram-bot"]` to it
-   - Create the file if it doesn't exist
+3. **Clone and install the plugin:**
+   - Clone from github:nebojsa-simic/opencode-telegram-bot
+   - Create `~/.config/opencode-bot/plugins/` directory
+   - Copy telegram.ts, mcp-deferred.ts to plugins/
+   - Copy AGENTS.md to ~/.config/opencode-bot/
+   - Run npm install in the cloned repo
 
-4. **Install the plugin:**
-   - Clone or download from github:nebojsa-simic/opencode-telegram-bot
-   - Run npm install in the plugin directory
+4. **Add plugin to opencode:**
+   - Check if `~/.config/opencode/opencode.json` exists
+   - Add "./plugins/mcp-deferred.ts" and "./plugins/telegram.ts" to plugin array
+   - Add "AGENTS.md" to instructions array
+   - Create the file if it doesn't exist
 
 5. **Set up 24/7 service:**
    - Check if I'm on Linux or macOS
    - If Linux: run `loginctl enable-linger $(whoami)`
-   - Download and run the setup-service.sh script OR set up systemd/launchd manually
+   - Set up systemd (Linux) or launchd (macOS) service
 
 6. **Test the bot:**
    - Verify the service is running
