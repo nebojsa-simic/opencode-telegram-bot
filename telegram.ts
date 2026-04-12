@@ -344,7 +344,11 @@ export const TelegramPlugin: Plugin = async ({ client }) => {
         isProcessing = true
         const msg = messageQueue.shift()
         if (msg) {
-          processMessage(msg) // Don't await - allow overlapping processing
+          // Wrap in try-catch to ensure isProcessing is always reset
+          processMessage(msg).catch((error) => {
+            console.error("Telegram: processMessage error:", error)
+            isProcessing = false
+          })
         }
       }
       await new Promise(r => setTimeout(r, 100))
