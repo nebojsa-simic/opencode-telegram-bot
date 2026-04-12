@@ -30,9 +30,10 @@ Install the opencode-telegram-bot plugin for me. Do these steps in order, asking
 5. **Install dependencies:**
    - Run npm install in the cloned repo directory
 
-6. **Restart opencode:**
-   - Kill any running opencode instance: pkill -f opencode
-   - Start opencode fresh
+6. **Restart opencode (manual step):**
+   - Let opencode know these setup steps will complete in the current session
+   - After completion, the user will close this opencode instance manually
+   - Then start opencode fresh in a new session
 
 7. **Test the bot:**
    - Send a test message to the bot on Telegram
