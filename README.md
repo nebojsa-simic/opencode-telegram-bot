@@ -3,6 +3,7 @@
 A production-ready **single-user** Telegram bot plugin for opencode with streaming responses, persistent sessions, and smart timeout recovery.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![CI](https://github.com/nebojsa-simic/opencode-telegram-bot/actions/workflows/ci.yml/badge.svg)](https://github.com/nebojsa-simic/opencode-telegram-bot/actions/workflows/ci.yml)
 
 ## Quick Start
 
