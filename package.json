@@ -6,6 +6,7 @@
   "main": "./telegram.ts",
   "scripts": {
     "test": "node --test --experimental-test-coverage tests/*.test.js",
+    "typecheck": "tsc --noEmit",
     "postinstall": "echo '✅ opencode-telegram-bot installed! See README.md for setup instructions.'"
   },
   "repository": {
