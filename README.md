@@ -238,14 +238,14 @@ Test coverage:
 To remove the plugin, paste this prompt into opencode:
 
 ```markdown
-Uninstall the opencode-telegram-bot plugin for me. Do these steps in order, asking for confirmation between each:
+Uninstall the opencode-telegram-bot plugin for me. Do these steps in order:
 
-1. Stop opencode (pkill -f opencode)
-2. Remove plugin files: ~/.config/opencode/plugins/telegram.ts and ~/.config/opencode-bot/AGENTS.md
-3. Update ~/.config/opencode/opencode.json: remove "./plugins/telegram.ts" from plugin array and "../opencode-bot/AGENTS.md" from instructions
-4. Optionally clean up: ~/.config/opencode-bot/.env (credentials), ~/.config/opencode-bot/telegram-sessions.json (sessions)
-5. Optionally remove cloned repo directory
-6. Confirm uninstallation complete
+1. Remove plugin files: ~/.config/opencode/plugins/telegram.ts and ~/.config/opencode-bot/AGENTS.md
+2. Update ~/.config/opencode/opencode.json: remove "./plugins/telegram.ts" from plugin array and "../opencode-bot/AGENTS.md" from instructions
+3. Optionally clean up: ~/.config/opencode-bot/.env (credentials), ~/.config/opencode-bot/telegram-sessions.json (sessions)
+4. Optionally remove cloned repo directory
+5. Tell me to restart opencode manually after these steps complete
+6. Confirm uninstallation complete after restart
 
 Start with step 1. Guide me through each step, waiting for confirmation before proceeding.
 ```
@@ -260,6 +260,8 @@ rm ~/.config/opencode-bot/AGENTS.md
 # Optionally remove credentials and session data
 rm ~/.config/opencode-bot/.env
 rm ~/.config/opencode-bot/telegram-sessions.json
+
+# Then close and restart opencode manually
 ```
 
 ---
