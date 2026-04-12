@@ -181,6 +181,36 @@ export const TelegramPlugin: Plugin = async ({ client }) => {
     }
   }
 
+  // Enforce single-user requirement
+  if (CONFIG.ALLOWLIST.length === 0) {
+    console.error("Telegram plugin: TELEGRAM_ALLOWLIST is required!")
+    console.error("Telegram plugin: This bot supports ONE user only.")
+    console.error("Telegram plugin: Add your chat ID to ~/.config/opencode-bot/.env:")
+    console.error("  TELEGRAM_ALLOWLIST=your_chat_id_here")
+    console.error("Telegram plugin: Plugin will not function until configured.")
+    
+    return {
+      tool: {
+        telegram_send: tool({
+          description: "Send a Telegram message (not configured)",
+          args: {
+            chatId: z.string(),
+            message: z.string()
+          },
+          execute: async () => {
+            return "Telegram bot not configured. Please set TELEGRAM_ALLOWLIST in ~/.config/opencode-bot/.env"
+          }
+        })
+      }
+    }
+  }
+
+  if (CONFIG.ALLOWLIST.length > 1) {
+    console.warn("Telegram plugin: Multiple chat IDs detected. This bot is designed for ONE user only.")
+    console.warn(`Telegram plugin: Using first ID: ${CONFIG.ALLOWLIST[0]}`)
+    console.warn("Telegram plugin: Remove additional IDs from TELEGRAM_ALLOWLIST to avoid unexpected behavior.")
+  }
+
   const BOT_API = `https://api.telegram.org/bot${CONFIG.TOKEN}`
   let lastUpdateId = 0
 
@@ -274,7 +304,8 @@ export const TelegramPlugin: Plugin = async ({ client }) => {
         
         // Retry with simpler context
         try {
-          const sessionId = await getOrCreateSession(chatId)
+          sessionId = await getOrCreateSession(chatId)
+          streamingSessions[sessionId] = { chatId, buffer: new DeltaTextBuffer(300) }
           const simplifiedPrompt = `Provide a concise answer (under 100 words) to: ${text.substring(0, 200)}`
           
           await client.session.prompt({
@@ -338,6 +369,13 @@ export const TelegramPlugin: Plugin = async ({ client }) => {
           const text = msg.text.trim()
           const messageId = msg.message_id
           
+          // Single-user enforcement: reject messages from non-configured chat
+          if (CONFIG.ALLOWLIST[0] !== chatId) {
+            console.warn(`Telegram: Ignoring message from unauthorized chat ${chatId}`)
+            await sendMessage(chatId, "This bot is configured for a single user. Your chat ID is not authorized.", messageId)
+            continue
+          }
+          
           // Handle commands
           if (text === "/clear" || text === "/reset" || text === "/new") {
             const oldSessionId = chatSessions.get(chatId)
@@ -400,8 +438,9 @@ export const TelegramPlugin: Plugin = async ({ client }) => {
       message: z.string()
     },
     execute: async ({ chatId, message }) => {
-      if (CONFIG.ALLOWLIST.length > 0 && !CONFIG.ALLOWLIST.includes(chatId)) {
-        return `Error: Chat ${chatId} not in allowlist`
+      // Single-user design: only allow the configured chat ID
+      if (CONFIG.ALLOWLIST[0] !== chatId) {
+        return `Error: Chat ${chatId} not allowed. This bot supports one user only (configured: ${CONFIG.ALLOWLIST[0]})`
       }
       await sendMessage(chatId, message)
       return "Sent"
