@@ -263,16 +263,16 @@ export const TelegramPlugin: Plugin = async ({ client }) => {
       console.log(`Telegram: Processing message from ${chatId} (session: ${sessionId.substring(0, 15)})`)
       
       // 60-second timeout on prompt
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 60000)
-      
       try {
         await client.session.prompt({
           path: { id: sessionId },
           body: { parts: [{ type: "text", text }] }
-        }, { signal: controller.signal } as any)
-      } finally {
-        clearTimeout(timeoutId)
+        })
+      } catch (promptError: any) {
+        if (promptError.name === "AbortError" || promptError.message?.includes("timeout")) {
+          throw promptError
+        }
+        throw promptError
       }
       
       // Send final remainder
@@ -315,17 +315,10 @@ export const TelegramPlugin: Plugin = async ({ client }) => {
           streamingSessions[sessionId] = { chatId, buffer: new DeltaTextBuffer(300) }
           const simplifiedPrompt = `Provide a concise answer (under 100 words) to: ${text.substring(0, 200)}`
           
-          const retryController = new AbortController()
-          const retryTimeoutId = setTimeout(() => retryController.abort(), 30000)
-          
-          try {
-            await client.session.prompt({
-              path: { id: sessionId },
-              body: { parts: [{ type: "text", text: simplifiedPrompt }] }
-            }, { signal: retryController.signal } as any)
-          } finally {
-            clearTimeout(retryTimeoutId)
-          }
+          await client.session.prompt({
+            path: { id: sessionId },
+            body: { parts: [{ type: "text", text: simplifiedPrompt }] }
+          })
           
           const streaming = streamingSessions[sessionId]
           if (streaming) {
