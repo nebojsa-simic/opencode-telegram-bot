@@ -191,7 +191,7 @@ export const TelegramPlugin: Plugin = async ({ client }) => {
           streamingSessions[sessionId] = { chatId, buffer: new DeltaTextBuffer(300) }
           await client.session.prompt({
             path: { id: sessionId },
-            body: { parts: [{ type: "text", `Concise answer to: ${text.substring(0, 200)}` }] }
+            body: { parts: [{ type: "text", text: `Concise answer to: ${text.substring(0, 200)}` }] }
           })
           const streaming = streamingSessions[sessionId]
           if (streaming) {
